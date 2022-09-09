@@ -23,7 +23,7 @@ def acquire_zillow():
     
     query = """
             
-    SELECT bedroomcnt, bathroomcnt, calculatedfinishedsquarefeet, lotsizesquarefeet, taxvaluedollarcnt, yearbuilt, fips, transactiondate
+    SELECT bedroomcnt, bathroomcnt, calculatedfinishedsquarefeet, lotsizesquarefeet, taxvaluedollarcnt, yearbuilt, fips 
     FROM properties_2017
 
     LEFT JOIN propertylandusetype USING(propertylandusetypeid)
@@ -44,8 +44,7 @@ def acquire_zillow():
                               'calculatedfinishedsquarefeet':'area',
                               'taxvaluedollarcnt':'tax_value', 
                               'yearbuilt':'year_built',
-                              'lotsizesquarefeet':'lot_area',
-                              'transactiondate':'date_sold'})
+                              'lotsizesquarefeet':'lot_area'})
     return df
 
 #**************************************************Remove Outliers*******************************************************
@@ -78,7 +77,7 @@ def get_hist(df):
     plt.figure(figsize=(16, 3))
 
     # List of columns
-    cols = [col for col in df.columns if col not in ['fips', 'year_built','date_sold']]
+    cols = [col for col in df.columns if col not in ['fips', 'year_built',]]
 
     for i, col in enumerate(cols):
 
@@ -158,7 +157,7 @@ def prepare_zillow(df):
     train_validate, test = train_test_split(df, test_size=.2, random_state=123)
     train, validate = train_test_split(train_validate, test_size=.3, random_state=123)
     
-    # impute year built using mode
+    # impute year built using median
     imputer = SimpleImputer(strategy='median')
 
     imputer.fit(train[['year_built']])
@@ -176,7 +175,10 @@ def prepare_zillow(df):
 def wrangle_zillow():
     '''Acquire and prepare data from Zillow database for explore'''
     if os.path.isfile('train.csv'):
-        return pd.read_csv('train.csv'), pd.read_csv('validate.csv'), pd.read_csv('test.csv')
+        train=pd.read_csv('train.csv')
+        get_box(train)
+        get_hist(train)
+        return train, pd.read_csv('validate.csv'), pd.read_csv('test.csv')
     else:
         train, validate, test = prepare_zillow(acquire_zillow())
         train.to_csv('train.csv',index=False), validate.to_csv('validate.csv', index=False), test.to_csv('test.csv', index=False)
