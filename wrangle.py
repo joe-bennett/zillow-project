@@ -1,7 +1,7 @@
 '''Wrangles data from Zillow Database'''
 
 ##################################################Wrangle.py###################################################
-
+#these are all the library imports and env file needed to run the functions in this file
 import pandas as pd
 
 import matplotlib.pyplot as plt
@@ -17,7 +17,7 @@ import os
 #**************************************************Acquire*******************************************************
 
 def acquire_zillow():
-    ''' Acquire data from Zillow using env imports and rename columns'''
+    ''' Acquire bed, bath, building and lot sq ft, assessed value and fips location from codeup database using credentials from env file'''
     
     url = f"mysql+pymysql://{user}:{password}@{host}/zillow"
     
@@ -34,11 +34,11 @@ def acquire_zillow():
                                 
     AND transactiondate BETWEEN '2017-01-01' AND '2017-12-31' """
 
-    # get dataframe of data
+    # get dataframe of data and saving it as variable named df
     df = pd.read_sql(query, url)
     
     
-    # renaming column names to one's I like better
+    # renaming column names to easier to understand names
     df = df.rename(columns = {'bedroomcnt':'bedrooms', 
                               'bathroomcnt':'bathrooms', 
                               'calculatedfinishedsquarefeet':'area',
@@ -72,7 +72,7 @@ def remove_outliers(df, k, col_list):
 #**************************************************Distributions*******************************************************
 
 def get_hist(df):
-    ''' Gets histographs of acquired continuous variables'''
+    ''' Gets histographs of acquired continuous variables from the dataset'''
     
     plt.figure(figsize=(16, 3))
 
@@ -137,7 +137,7 @@ def get_box(df):
 #**************************************************Prepare*******************************************************
 
 def prepare_zillow(df):
-    ''' Prepare zillow data for exploration'''
+    ''' Prepare zillow data for exploration by taking in a dataframe and returns train, validate, test'''
 
     # removing outliers
     df = remove_outliers(df, 1.5, ['bedrooms', 'bathrooms', 'area', 'tax_value',])
@@ -146,18 +146,18 @@ def prepare_zillow(df):
     get_hist(df)
     get_box(df)
     
-    # drop null values that are left in the lot size data
+    # drop null values that are left in the lot size data since there are so few
     df=df.dropna()
     
-    # converting column datatypes
+    # converting column datatypes 
     df.fips = df.fips.astype(object)
     df.year_built = df.year_built.astype(object)
     
-    # train/validate/test split
+    # train/validate/test split and is reproducible due to random_state = 123
     train_validate, test = train_test_split(df, test_size=.2, random_state=123)
     train, validate = train_test_split(train_validate, test_size=.3, random_state=123)
     
-    # impute year built using median
+    # impute year built using median from train data set and then applied to the validate and test set as well
     imputer = SimpleImputer(strategy='median')
 
     imputer.fit(train[['year_built']])
@@ -173,7 +173,8 @@ def prepare_zillow(df):
 
 
 def wrangle_zillow():
-    '''Acquire and prepare data from Zillow database for explore'''
+    '''Acquire and prepare data from Zillow database to explore. will search local directory for CSV files first, if not present
+    will pull from SQL server and automatically save it to train,validate, and test CSV files in same directory'''
     if os.path.isfile('train.csv'):
         train=pd.read_csv('train.csv')
         get_box(train)

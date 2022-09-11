@@ -13,6 +13,8 @@ from sklearn.metrics import mean_squared_error
 from sklearn.linear_model import LinearRegression, LassoLars, TweedieRegressor
 from sklearn.preprocessing import PolynomialFeatures
 
+from sklearn.metrics import explained_variance_score
+
 
 def create_heat_map(train):
     corr_matrix=train.corr()
@@ -102,16 +104,10 @@ def scale_data(X_train,X_validate,X_test):
     X_train_scaled = scaler.transform(X_train)
     X_validate_scaled = scaler.transform(X_validate)
     X_test_scaled = scaler.transform(X_test)
+    return X_train,X_validate,X_test
 
-    plt.figure(figsize=(13, 6))
-    plt.subplot(121)
-    plt.hist(X_train, bins=25, ec='black')
-    plt.title('Original')
-    plt.subplot(122)
-    plt.hist(X_train_scaled, bins=25, ec='black')
-    plt.title('Scaled')
-    plt.show()
-    return X_train_scaled, X_validate_scaled, X_test
+
+
 
 
 def calc_baseline(y_train,y_validate):
@@ -142,3 +138,54 @@ def calc_baseline(y_train,y_validate):
 
     print("RMSE using Median\nTrain/In-Sample: ", round(rmse_train, 2), 
         "\nValidate/Out-of-Sample: ", round(rmse_validate, 2))
+
+
+def model_eval_compare(y_train,y_validate):
+    plt.figure(figsize=(16,8))
+    plt.axhline(label="No Error")
+    plt.scatter(y_validate.tax_value, y_validate.value_pred_lm-y_validate.tax_value, 
+                alpha=.7, color="red", s=10, label="Model: LinearRegression")
+    plt.scatter(y_validate.tax_value, y_validate.value_pred_lars-y_validate.tax_value, 
+                alpha=.7, color="yellow", s=10, label="Model: LassoLars")
+    plt.scatter(y_validate.tax_value, y_validate.value_pred_lm2-y_validate.tax_value, 
+                alpha=.2, color="green", s=10, label="Model 2nd degree Polynomial")
+    plt.legend()
+    plt.xlabel("Actual Assessed Value")
+    plt.ylabel("Residual/Error: Predicted value - Actual Value")
+    plt.title("Errors in predictions")
+    plt.annotate("The polynomial model appears less consistent", (350000, 450000))
+    plt.annotate("The OLS model (LinearRegression)\n appears to be more consistent no outliers", (20000, -400000))
+    plt.show()
+
+        # plot to visualize actual vs predicted. 
+    plt.figure(figsize=(16,8))
+    plt.hist(y_validate.tax_value, color='blue', alpha=.5, label="Actual Assessed Values")
+    plt.hist(y_validate.value_pred_lm, color='red', alpha=.5, label="Model: LinearRegression")
+    plt.hist(y_validate.value_pred_lars, color='yellow', alpha=.5, label="Model: LassoLars")
+    plt.hist(y_validate.value_pred_lm2, color='green', alpha=.5, label="Model 2nd degree Polynomial")
+    plt.xlabel("Assessed Value")
+    plt.ylabel("Number of Properties")
+    plt.title("Comparing the Distribution of Actual Assessed values to Distributions of Predicted Values for the Top Models")
+    plt.legend()
+    plt.show()
+
+    evs_lm = explained_variance_score(y_train.tax_value, y_train.value_pred_lm)
+    print('Explained Variance linear regression = ', round(evs_lm,3))
+
+    evs_lars = explained_variance_score(y_train.tax_value, y_train.value_pred_lars)
+    print('Explained Variance LassoLars = ', round(evs_lars,3))
+
+    evs_poly = explained_variance_score(y_train.tax_value, y_train.value_pred_lm2)
+    print('Explained Variance Polynomial regression = ', round(evs_poly,3))
+
+def show_best_model_on_test(y_test):
+    plt.figure(figsize=(16,8))
+    plt.axhline(label="No Error")
+    plt.scatter(y_test.tax_value, y_test.value_pred_lm-y_test.tax_value, 
+                alpha=.7, color="red", s=10, label="Model: LinearRegression")
+    plt.legend()
+    plt.xlabel("Actual Assessed Value")
+    plt.ylabel("Residual/Error: Predicted value - Actual Value")
+    plt.title("Top model performed same on final out of sample data")
+    plt.annotate("The OLS model (LinearRegression)\n seems more concentrated in lower assessed values", (10000, -200000))
+    plt.show()
