@@ -1,3 +1,5 @@
+# imports used to make the following functions work
+
 import seaborn as sns
 import numpy as np
 import pandas as pd 
@@ -17,6 +19,7 @@ from sklearn.metrics import explained_variance_score
 
 
 def create_heat_map(train):
+    """takes in the train dataframe and creates a correlation coefficent matrix. then takes that matrix and creates a heatmap"""
     corr_matrix=train.corr()
     
     kwargs = {'alpha':.9,'linewidth':3, 'linestyle':'-', 
@@ -28,22 +31,26 @@ def create_heat_map(train):
 
 
 def create_violin_chart_bedrooms(train):
-     sns.violinplot(x='bedrooms', y='tax_value', data=train)
-     plt.ticklabel_format(style='plain', axis='y')
-     plt.title('Assessed Values trend upward with # of rooms')
-     plt.show()
-     r, p_value = pearsonr(train.bedrooms, train.tax_value)
-     print(f'Correlation Coefficient: {r}\nP-value: {p_value}')
+    """creates violin plot of bedrooms from the train dataframe"""
+    sns.violinplot(x='bedrooms', y='tax_value', data=train)
+    plt.ticklabel_format(style='plain', axis='y')
+    plt.title('Assessed Values trend upward with # of rooms')
+    plt.show()
+    r, p_value = pearsonr(train.bedrooms, train.tax_value)
+    print(f'Correlation Coefficient: {r}\nP-value: {p_value}')
     
 def create_violin_chart_bathrooms(train):
-     sns.violinplot(x='bathrooms', y='tax_value', data=train)
-     plt.ticklabel_format(style='plain', axis='y')
-     plt.title('Assessed Values trend upward with # of rooms')
-     plt.show()
-     r, p_value = pearsonr(train.bathrooms, train.tax_value)
-     print(f'Correlation Coefficient: {r}\nP-value: {p_value}')
+    """creates violin plot of bathrooms from the train dataframe"""
+
+    sns.violinplot(x='bathrooms', y='tax_value', data=train)
+    plt.ticklabel_format(style='plain', axis='y')
+    plt.title('Assessed Values trend upward with # of rooms')
+    plt.show()
+    r, p_value = pearsonr(train.bathrooms, train.tax_value)
+    print(f'Correlation Coefficient: {r}\nP-value: {p_value}')
     
 def create_boxen_plot_area(train):
+    """takes in the train DataFrame and creates a boxenplot"""
     sns.boxenplot(data=train, x=pd.cut(train.area,bins=6), y="tax_value")
     plt.ticklabel_format(style='plain', axis='y')
     plt.xticks(rotation = 90)
@@ -55,6 +62,7 @@ def create_boxen_plot_area(train):
     print(f'Correlation Coefficient: {r}\nP-value: {p_value}')
 
 def feature_engineer(train,validate,test):
+    """takes in train, validate, and test data and creates the two features area/lot ratio and non bed/bath area"""
 
     train['lot_living_ratio']= train.area/ train.lot_area
     validate['lot_living_ratio']= validate.area/ validate.lot_area
@@ -67,6 +75,7 @@ def feature_engineer(train,validate,test):
 
 
 def regplot_engineered_feat(train):
+    """takes the train DataFrame and creates a regplot for the non bed/bath column"""
     sns.lmplot(x='non_bed_bath_area', y='tax_value', data=train, scatter_kws={"s": .5},line_kws={"color": "C1"})
     plt.ticklabel_format(style='plain', axis='y')
     plt.title('Non bed or bath sq ft trends upward with assessed value')
@@ -79,6 +88,8 @@ def regplot_engineered_feat(train):
 
 
 def X_and_y_split(train,validate,test):
+    """takes in train, validate, test data and splits it into X and y data sets 
+    returning X_train, y_train, X_validate, y_validate, X_test, y_test"""
     X_train = train.drop(columns=['tax_value'])
     y_train = train.tax_value
 
@@ -92,7 +103,7 @@ def X_and_y_split(train,validate,test):
 
 
 def target_var_dist(y_train):
-
+    """takes the y_train data and creates histogram to display target variable distribution"""
     plt.hist(y_train)
     plt.xlabel('assessed value')
     plt.ylabel("Number of properties")
@@ -111,6 +122,8 @@ def scale_data(X_train,X_validate,X_test):
 
 
 def calc_baseline(y_train,y_validate):
+    """takes in y_train and y_validate data and converts into DataFrames. The mean and median are both calculated and printed below along with 
+    the RMSE for each"""
     # We need y_train and y_validate to be dataframes to append the new columns with predicted values. 
     y_train = pd.DataFrame(y_train)
     y_validate = pd.DataFrame(y_validate)
@@ -141,6 +154,8 @@ def calc_baseline(y_train,y_validate):
 
 
 def model_eval_compare(y_train,y_validate):
+    """takes in the y_train and y_validate DataFrames and returns a scatterplot and a histogram that overlays all models and compares them. 
+    below that the R^2 values for each is printed"""
     plt.figure(figsize=(16,8))
     plt.axhline(label="No Error")
     plt.scatter(y_validate.tax_value, y_validate.value_pred_lm-y_validate.tax_value, 
@@ -179,6 +194,7 @@ def model_eval_compare(y_train,y_validate):
     print('Explained Variance Polynomial regression = ', round(evs_poly,3))
 
 def show_best_model_on_test(y_test):
+    """plug in the y_test dataframe and returns a chart showing prediction error, RMSE, and R^2 using linear regression model"""
     plt.figure(figsize=(16,8))
     plt.axhline(label="No Error")
     plt.scatter(y_test.tax_value, y_test.value_pred_lm-y_test.tax_value, 
@@ -189,3 +205,4 @@ def show_best_model_on_test(y_test):
     plt.title("Top model performed same on final out of sample data")
     plt.annotate("The OLS model (LinearRegression)\n seems more concentrated in lower assessed values", (10000, -200000))
     plt.show()
+
